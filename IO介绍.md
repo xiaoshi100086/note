@@ -536,9 +536,11 @@ main(int c, char **v)
 
 # 事件函数 select、poll、epoll
 
-事件函数作用是监视socket事件，调用时会阻塞，除非是有socket事件到来或者等待超时。其实现原理比较相似，实现流程如下：
+事件函数作用是监视socket事件，调用时会阻塞，除非是有socket事件到来或者等待超时。通用流程如下：
 
 1. 获取fd队列，依次调用对应的file.f_op->poll()方法，检测每个fd是否有io事件就绪。如果没有就绪，还会调用poll_wait()把select/poll/epoll对应的唤醒任务添加到fd的等待队列中。
 2. 如果有io事件就绪，收集io事件返回，本次调用结束。如果没有io事件就绪，如果没有设置超时时间，直接返回；设置了超时时间，则将select/poll/epoll调用任务挂起。
-3. 当某个fd事件准备就绪，会调用回调函数把select/poll/epoll唤醒。
+3. 当某个fd事件准备就绪，会调用等待队列中的select/poll/epoll唤醒函数。
 4. select/poll/epoll唤醒后，进行返回。
+
+![](https://github.com/xiaoshi100086/note/resource/IO介绍_select原理.png)
