@@ -1,6 +1,6 @@
-# 事件函数 select、poll、epoll
+# 事件多路分发函数 select、poll、epoll
 
-事件函数作用是监视socket事件，调用时会阻塞，除非是有socket事件到来或者等待超时。
+事件多路分发函数作用是监视socket事件，调用时会阻塞，除非是有socket事件到来或者等待超时。
 
 ## select
 
