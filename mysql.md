@@ -1,6 +1,6 @@
 # 创建用户
 ```
-create user 'USER'@'host' identified by 'PASSWORD';
+create user 'USER'@'HOST' identified by 'PASSWORD';
 ```
 ps: mysql用户有两个字段构成，USER和HOST，HOST可以是`localhost`、`%`或者普通ip。其中%表示所有ip。
 
@@ -19,11 +19,11 @@ DROP USER  'USER'@'HOST';
 
 # 设置用户权限
 ```
-grant all privileges on DATABASE.TABLE to 'USER'@'HOST';
+grant all privileges on DATABASE.TABLE to 'USER'@'HOST' identified by 'PASSWORD';
 flush privileges
 ```
-* DATABASE : 数据库名称
-* TABLE : 表名称
+* DATABASE : 数据库名称，`*`表示所有
+* TABLE : 表名称，`*`表示所有
 * USER : 用户名
 * HOST : 访问msyql所在host的ip
 * PASSWORD : 密码
