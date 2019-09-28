@@ -11,16 +11,17 @@ tcp是面向流的，连接建立好后，可以认为在客户端与服务端�
 服务端代码
 
 ```C
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <memory.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <netinet/in.h> /* for struct sockaddr_in*/
 #include <sys/errno.h>
 #include <signal.h>
+#include <arpa/inet.h>
 
 //关于服务器的socket
 void error_exit(char *name)
@@ -30,7 +31,12 @@ void error_exit(char *name)
 }
 int main(int argc,char *argv[])
 {
+   // AF_INET  表示使用ipv4协议进行通信
+   // AF_INET6 表示使用ipv6协议进行通信
+   // SOCK_STREAM 流式套接字，也就是tcp协议，数据是顺序发送的，也是顺序接受的。同时上一包数据与下一包数据没有明显界限
+   // SOCK__DGRAM 数据包套接字，也就是udp协议，数据是打包成数据包发送的，接受的数据可能与发送的数据顺序不一致，接受的数据也可能出错。
    int sockfd=socket(AF_INET,SOCK_STREAM,0);
+
    if(sockfd<0)
    {
         error_exit("create error");
@@ -39,9 +45,9 @@ int main(int argc,char *argv[])
    struct sockaddr_in svraddr;
    memset(&svraddr,0,sizeof(svraddr));
    svraddr.sin_family=AF_INET;
-   svraddr.sin_addr.s_addr=INADDR_ANY;
-   //svraddr.sin_addr.s_addr=inet_addr("127.0.0.1");//第二种写法
-   svraddr.sin_port=htons(5555);//大于1024，系统用的都是小于1024
+   svraddr.sin_addr.s_addr=INADDR_ANY; // INADDR_ANY 表示 0.0.0.0
+   //svraddr.sin_addr.s_addr=inet_addr("127.0.0.1"); // 第二种写法
+   svraddr.sin_port=htons(5555); // 大于1024，系统用的都是小于1024
    int ret=bind(sockfd,(struct sockaddr*)&svraddr,sizeof(svraddr));
     if(ret<0)
     {
@@ -69,8 +75,9 @@ int main(int argc,char *argv[])
         int rdsize = -1;
         while(rdsize != 0)
         {
-            rdsize =read(fd,buf,3);
-            printf("read size %d,data=%s\n",rdsize,buf);
+            memset(buf, 0, sizeof(buf));
+            rdsize =read(fd,buf,4);
+            printf("read from ip(%s) port(%u) rdsize(%d) data:%s\n", inet_ntoa(removeaddr.sin_addr), removeaddr.sin_port, rdsize, buf);
         }
     }
     return 0;
@@ -80,7 +87,6 @@ int main(int argc,char *argv[])
 客户端代码
 
 ```C
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -120,13 +126,16 @@ int main(int argc,char *argv[])
       error_exit("connect error");
    }
 
-   char *hello = "helloworld";
-   size_t len = strlen(hello);
+   char *send_msg = "helloworld";
+   char print_buffer[16];
+   size_t len = strlen(send_msg);
    while(len>0)
    {
-      int wdsize=write(fd,hello,2);
-      printf("write size=%d\n",wdsize);
-      hello+=wdsize;
+      memset(print_buffer, 0, sizeof(print_buffer));
+      int wdsize=write(fd,send_msg,2);
+      memcpy(print_buffer, send_msg, wdsize);
+      printf("write size(%d) data:%s\n", wdsize, print_buffer);
+      send_msg+=wdsize;
       len-=wdsize;
    }
    return 0;
@@ -141,7 +150,6 @@ upd是面向报文包的，所以没有tcp的粘包现象。
 被动方代码
 
 ```C
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -150,6 +158,7 @@ upd是面向报文包的，所以没有tcp的粘包现象。
 #include <netinet/in.h> /* for struct sockaddr_in*/
 #include <sys/errno.h>
 #include <signal.h>
+#include <arpa/inet.h>
 
 //关于服务器udp的socket
 void error_exit(char *name)
@@ -181,12 +190,12 @@ int main(int argc,char *argv[])
    int addrlen=sizeof(removeaddr);
    while(1)
    {
-       memset(buf,0,1024);
-       int rdsize= recvfrom(sockfd,buf,1024,0,(struct sockaddr*)&removeaddr,&addrlen);
-       if(rdsize>0)
-       {
-            printf("read data %s\n",buf);
-       }
+      memset(buf,0,1024);
+      int rdsize= recvfrom(sockfd,buf,1024,0,(struct sockaddr*)&removeaddr,&addrlen);
+      if(rdsize>0)
+      {
+         printf("read from ip(%s) port(%u) rdsize(%d) data:%s\n", inet_ntoa(removeaddr.sin_addr), removeaddr.sin_port, rdsize, buf);
+      }
    }
    return 0;
 }
