@@ -1,7 +1,14 @@
-```mermaid
-pie
-    title Pie Chart
-    "Dogs" : 386
-    "Cats" : 85
-    "Rats" : 150 
-```
+# Go GC
+
+go 的垃圾收集器是 Concurrent Mask & Sweep (CMS) 。
+
+- 它是并行标记的，用写屏障保证标记的正确。这个和 JVM 比较像
+- 它不是压缩的，也不是分代的。这一点跟 JVM 不同
+
+## 并行标记和写屏障
+
+## gc 压缩
+
+gc 压缩是指 gc 中会将活动的对象迁移到堆的末端来压缩堆，用于避免内存碎片的问题。
+
+## gc 分代
