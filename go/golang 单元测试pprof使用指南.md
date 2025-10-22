@@ -36,5 +36,7 @@ BenchmarkDebug/api-8                 1234              1234 ns/op             12
 
 # 解析pprof数据
 使用go tool命令解析pprof数据，并使用浏览器打开
+```shell
 go tool pprof -http=:1234 ./cpu.prof
 go tool pprof -http=:1235 ./mem.prof
+```
